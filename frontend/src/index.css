@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  }
+  body {
+    background-color: #DCE5E7;
+    background-image: 
+      radial-gradient(at 10% 10%, rgba(255, 255, 255, 0.6) 0px, transparent 50%),
+      radial-gradient(at 90% 20%, rgba(220, 235, 238, 0.8) 0px, transparent 60%),
+      radial-gradient(at 50% 90%, rgba(200, 218, 222, 0.5) 0px, transparent 60%);
+    background-attachment: fixed;
+    color: #12181B;
+    @apply antialiased min-h-screen;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+    letter-spacing: -0.02em;
+  }
+  ::selection {
+    background: #12181B;
+    color: white;
+  }
+  :focus-visible {
+    outline: 2px solid #12181B;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 10px 30px -10px rgba(18, 24, 27, 0.05), 0 2px 8px -2px rgba(18, 24, 27, 0.03);
+  }
+  
+  .glass-card-subtle {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(18, 24, 27, 0.15);
+    border-radius: 999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(18, 24, 27, 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
