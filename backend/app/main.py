@@ -7,9 +7,15 @@ Run with:
 import logging
 import os
 
-# Prioritize local cached Hugging Face models to eliminate retry timeouts
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
-os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+# ---------------------------------------------------------------------------
+# Offline / online model loading
+# On Render (or any cloud host) HF_HUB_OFFLINE must be "0" so models are
+# downloaded on first boot.  Locally it defaults to "1" (use cache) to avoid
+# slow Hugging Face retries.  Set the env var explicitly in your deployment
+# environment to override.
+# ---------------------------------------------------------------------------
+os.environ.setdefault("HF_HUB_OFFLINE", os.getenv("HF_HUB_OFFLINE", "0"))
+os.environ.setdefault("TRANSFORMERS_OFFLINE", os.getenv("TRANSFORMERS_OFFLINE", "0"))
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
 from fastapi import FastAPI, Request
@@ -29,10 +35,20 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS: allow the Vite dev server / built frontend to call the API.
+# ---------------------------------------------------------------------------
+# CORS — origins are read from the ALLOWED_ORIGINS env var (comma-separated)
+# so the Vercel URL can be added without touching code.
+# Falls back to localhost dev origins when the env var is not set.
+# ---------------------------------------------------------------------------
+_raw_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173",
+)
+_allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

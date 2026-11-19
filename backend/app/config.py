@@ -6,10 +6,14 @@ import os
 from pydantic_settings import BaseSettings
 from pathlib import Path
 
-# Ensure Hugging Face and SentenceTransformers use offline/cached models by default
-# to eliminate 3+ minute network retry timeouts on step 4 (embeddings & transformers).
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
-os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+# ---------------------------------------------------------------------------
+# HF offline flag: on Render set HF_HUB_OFFLINE=0 so models download on first
+# boot.  Locally defaults to 1 (use cache) to avoid slow retry timeouts.
+# main.py sets these *before* importing config, so this block is a safety net
+# for cases where config is imported in isolation (e.g. tests).
+# ---------------------------------------------------------------------------
+os.environ.setdefault("HF_HUB_OFFLINE", os.getenv("HF_HUB_OFFLINE", "0"))
+os.environ.setdefault("TRANSFORMERS_OFFLINE", os.getenv("TRANSFORMERS_OFFLINE", "0"))
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
 
@@ -35,6 +39,11 @@ class Settings(BaseSettings):
 
     # Allowed file types
     allowed_extensions: set = {".pdf", ".docx", ".txt", ".csv"}
+
+    # CORS — comma-separated list of allowed origins.
+    # Set this on Render to your Vercel frontend URL.
+    # e.g. ALLOWED_ORIGINS=https://your-app.vercel.app
+    allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     class Config:
         env_file = ".env"

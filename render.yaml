@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: ai-doc-intel-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python -m spacy download en_core_web_sm
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # CORS: set this to your Vercel frontend URL after you deploy the frontend.
+      # Comma-separate multiple origins if needed.
+      - key: ALLOWED_ORIGINS
+        value: http://localhost:5173
+      # Set to 0 on Render so models download from Hugging Face on first boot.
+      # After first boot Render caches /root/.cache between deploys (paid plan).
+      - key: HF_HUB_OFFLINE
+        value: "0"
+      - key: TRANSFORMERS_OFFLINE
+        value: "0"
+      - key: HF_HUB_DISABLE_SYMLINKS_WARNING
+        value: "1"
+      # Optional: set your OpenAI key here if you use the external LLM path.
+      # - key: OPENAI_API_KEY
+      #   value: ""
