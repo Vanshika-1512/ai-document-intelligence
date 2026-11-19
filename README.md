@@ -195,6 +195,104 @@ frontend/src/
 
 ---
 
+## Deployment
+
+The project is split into two independently deployed services:
+
+| Layer | Platform | Config file |
+|---|---|---|
+| React frontend | **Vercel** | `frontend/vercel.json` |
+| FastAPI backend | **Render** | `render.yaml` |
+
+> **Important — ephemeral storage on Render free tier:**  
+> SQLite (`documents.db`) and uploaded files (`uploads/`) live on Render's local disk, which is wiped on every redeploy. Uploaded documents will be lost between deploys. For persistent storage, upgrade to a paid Render plan (persistent disk) or swap `DATABASE_URL` for a managed PostgreSQL connection string.
+
+> **Model download on first boot:**  
+> The four Hugging Face models (~5 GB total) are **not** bundled in the repo. On Render, `HF_HUB_OFFLINE` is set to `0` so they are downloaded from Hugging Face Hub the first time the service boots. First-boot startup can take **5–15 minutes**. Subsequent boots reuse Render's cache (paid plan) or re-download (free plan).
+
+---
+
+### 1 · Deploy the backend to Render
+
+1. Push this repository to GitHub.
+
+2. Go to [render.com](https://render.com) → **New → Web Service** → connect your GitHub repo.
+
+3. Render will detect `render.yaml` automatically. If using the dashboard manually, set:
+   - **Root directory:** `backend`
+   - **Build command:** `pip install -r requirements.txt && python -m spacy download en_core_web_sm`
+   - **Start command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Environment:** Python 3
+
+4. In **Environment Variables**, set:
+   ```
+   HF_HUB_OFFLINE        = 0
+   TRANSFORMERS_OFFLINE  = 0
+   ALLOWED_ORIGINS       = http://localhost:5173   ← update after step 2
+   ```
+   See `backend/.env.example` for the full list.
+
+5. Deploy. Wait for the build + first-boot model download to finish.  
+   Your backend URL will look like: `https://ai-doc-intel-backend.onrender.com`
+
+6. Test: `curl https://ai-doc-intel-backend.onrender.com/api/health` → `{"status":"ok"}`
+
+---
+
+### 2 · Deploy the frontend to Vercel
+
+1. Go to [vercel.com](https://vercel.com) → **New Project** → import your GitHub repo.
+
+2. Set the **Root Directory** to `frontend`.
+
+3. Framework preset: **Vite** (auto-detected).
+
+4. In **Environment Variables**, add:
+   ```
+   VITE_API_URL = https://ai-doc-intel-backend.onrender.com
+   ```
+   (Use your actual Render URL from step 1.)
+
+5. Deploy. Your frontend URL will look like: `https://your-app.vercel.app`
+
+6. The `frontend/vercel.json` already contains the SPA rewrite rule — all routes resolve to `index.html`.
+
+---
+
+### 3 · Wire CORS
+
+After both services are deployed, go back to your Render backend service → **Environment** → update:
+
+```
+ALLOWED_ORIGINS = https://your-app.vercel.app
+```
+
+Then **redeploy** the backend (Manual Deploy → Deploy Latest Commit).
+
+---
+
+### Local development (unchanged)
+
+```bash
+# Backend
+cd backend
+python -m venv venv
+venv\Scripts\activate          # Windows
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+copy .env.example .env         # Windows  (or: cp .env.example .env)
+# In .env, set HF_HUB_OFFLINE=1 to use your local model cache
+uvicorn app.main:app --reload
+
+# Frontend (new terminal)
+cd frontend
+npm install
+copy .env.example .env         # Windows  (or: cp .env.example .env)
+npm run dev
+```
+
+---
+
 ## Environment variables
 
 See `backend/.env.example`. Everything defaults to open-source/local models — `OPENAI_API_KEY` is optional and unused unless you extend the QA/summarization services to call an external LLM.

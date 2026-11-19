@@ -33,9 +33,22 @@ backend/.venv/
 __pycache__/
 *.py[cod]
 
-# Environment variables
+# Environment variables — keep .env.example in git, ignore real secrets
 .env
-.env.*
+.env.local
+.env.production
+.env.development
+
+# SQLite database (ephemeral local data — not for deployment)
+*.db
+*.sqlite
+
+# Uploaded documents and generated vector files (ephemeral, not for deployment)
+backend/uploads/
+!backend/uploads/.gitkeep
+
+# Hugging Face model cache (never commit — too large, downloaded at runtime)
+.cache/
 
 # Node dependencies
 node_modules/
